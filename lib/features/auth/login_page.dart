@@ -162,12 +162,12 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 18),
                       _SocialButton(
-                        label: 'Continue with Google',
+                        label: 'Continuar com Google',
                         icon: Icons.g_mobiledata,
                       ),
                       const SizedBox(height: 12),
                       _SocialButton(
-                        label: 'Continue with Apple',
+                        label: 'Continuar com Apple',
                         icon: Icons.apple,
                       ),
                     ],
