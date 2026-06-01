@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../core/models/pessoa_create_request.dart';
 import '../../core/services/api_client.dart';
 import '../../core/services/pessoas_service.dart';
+import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/crypto_utils.dart';
@@ -188,7 +189,11 @@ class _RegisterPageState extends State<RegisterPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cadastro realizado com sucesso!')),
         );
-        Navigator.pop(context);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.home,
+          (_) => false,
+        );
       }
     } catch (error) {
       if (mounted) {
@@ -250,9 +255,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 8),
                     Text('$_idade anos', style: AppTextStyles.body),
                     Slider(
-                      min: 10,
+                      min: 1,
                       max: 100,
-                      divisions: 90,
+                      divisions: 99,
                       value: _idade.toDouble(),
                       label: '$_idade',
                       onChanged: (value) {
@@ -455,7 +460,7 @@ class _DropdownField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       validator: validator,
       decoration: InputDecoration(hintText: hintText),
       items: items

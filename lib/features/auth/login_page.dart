@@ -54,6 +54,13 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await _authService.login(email: email, senhaHash: senhaHash);
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.home,
+          (_) => false,
+        );
+      }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
