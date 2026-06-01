@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../../core/models/pessoa_create_request.dart';
+import '../../core/routes/app_routes.dart';
 import '../../core/services/api_client.dart';
 import '../../core/services/pessoas_service.dart';
-import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/crypto_utils.dart';
@@ -42,33 +42,9 @@ class _RegisterPageState extends State<RegisterPage> {
   ];
 
   static const List<String> _estadoUfOptions = [
-    'AC',
-    'AL',
-    'AP',
-    'AM',
-    'BA',
-    'CE',
-    'DF',
-    'ES',
-    'GO',
-    'MA',
-    'MT',
-    'MS',
-    'MG',
-    'PA',
-    'PB',
-    'PR',
-    'PE',
-    'PI',
-    'RJ',
-    'RN',
-    'RS',
-    'RO',
-    'RR',
-    'SC',
-    'SP',
-    'SE',
-    'TO',
+    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+    'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+    'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
   ];
 
   static const List<String> _escolaridadeOptions = [
@@ -83,7 +59,20 @@ class _RegisterPageState extends State<RegisterPage> {
     'Doutorado',
   ];
 
-  final _formKey = GlobalKey<FormState>();
+  static const int _totalSteps = 4;
+
+  static const List<String> _stepTitles = [
+    'Dados Pessoais',
+    'Igreja e Perfil',
+    'Localizacao',
+    'Seguranca',
+  ];
+
+  final _step0Key = GlobalKey<FormState>();
+  final _step1Key = GlobalKey<FormState>();
+  final _step2Key = GlobalKey<FormState>();
+  final _step3Key = GlobalKey<FormState>();
+
   final _nameController = TextEditingController();
   final _cpfController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -92,6 +81,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _cidadeController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+
   int _idade = 18;
   String? _sexo;
   String? _papelIgreja;
@@ -102,6 +92,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscureConfirm = true;
   bool _acceptedTerms = false;
   bool _loading = false;
+  int _currentStep = 0;
 
   late final PessoasService _pessoasService;
 
@@ -125,6 +116,35 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  GlobalKey<FormState> _formKeyForStep(int step) {
+    switch (step) {
+      case 0:
+        return _step0Key;
+      case 1:
+        return _step1Key;
+      case 2:
+        return _step2Key;
+      case 3:
+        return _step3Key;
+      default:
+        return _step0Key;
+    }
+  }
+
+  void _nextStep() {
+    if (_formKeyForStep(_currentStep).currentState!.validate()) {
+      setState(() {
+        _currentStep++;
+      });
+    }
+  }
+
+  void _previousStep() {
+    setState(() {
+      _currentStep--;
+    });
+  }
+
   String? _validateName(String? value) {
     return requiredField(value, 'Informe seu nome.');
   }
@@ -141,9 +161,21 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
+    final allValid = _formKeyForStep(0).currentState!.validate() &
+        _formKeyForStep(1).currentState!.validate() &
+        _formKeyForStep(2).currentState!.validate() &
+        _formKeyForStep(3).currentState!.validate();
+
+    if (!allValid) {
+      for (int i = 0; i < _totalSteps; i++) {
+        if (!_formKeyForStep(i).currentState!.validate()) {
+          setState(() => _currentStep = i);
+          break;
+        }
+      }
       return;
     }
+
     if (!_acceptedTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Aceite os termos para continuar.')),
@@ -208,6 +240,348 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
+  Widget _buildStepIndicator() {
+    return SizedBox(
+      height: 48,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(_totalSteps, (index) {
+          final isCompleted = index < _currentStep;
+          final isCurrent = index == _currentStep;
+          final color = isCompleted || isCurrent
+              ? AppColors.primary
+              : Colors.grey.shade300;
+
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isCompleted || isCurrent
+                      ? AppColors.primary
+                      : Colors.transparent,
+                  border: Border.all(color: color, width: 2),
+                ),
+                child: Center(
+                  child: isCompleted
+                      ? const Icon(Icons.check, color: Colors.white, size: 18)
+                      : Text(
+                          '${index + 1}',
+                          style: TextStyle(
+                            color: isCurrent
+                                ? Colors.white
+                                : Colors.grey.shade600,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                ),
+              ),
+              if (index < _totalSteps - 1)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: 36,
+                  height: 2,
+                  color: index < _currentStep
+                      ? AppColors.primary
+                      : Colors.grey.shade300,
+                ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildStepTitle() {
+    return Column(
+      children: [
+        Text(
+          'Etapa ${_currentStep + 1} de $_totalSteps',
+          style: AppTextStyles.caption,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _stepTitles[_currentStep],
+          style: AppTextStyles.subtitle.copyWith(
+            color: AppColors.primary,
+            fontSize: 18,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavigation() {
+    return Row(
+      children: [
+        if (_currentStep > 0)
+          Expanded(
+            child: GileadeButton(
+              label: 'Voltar',
+              isOutline: true,
+              onPressed: _previousStep,
+            ),
+          ),
+        if (_currentStep > 0) const SizedBox(width: 16),
+        Expanded(
+          child: _currentStep < _totalSteps - 1
+              ? GileadeButton(
+                  label: 'Proximo',
+                  onPressed: _nextStep,
+                )
+              : GileadeButton(
+                  label: _loading ? 'Carregando...' : 'Confirmar',
+                  onPressed: _loading ? null : _submit,
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStep0() {
+    return Form(
+      key: _step0Key,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Coloque seu nome', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          GileadeTextField(
+            controller: _nameController,
+            hintText: 'Nome Completo',
+            validator: _validateName,
+          ),
+          const SizedBox(height: 18),
+          Text('CPF', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          GileadeTextField(
+            controller: _cpfController,
+            hintText: '00000000000',
+            keyboardType: TextInputType.number,
+            validator: validateCpf,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(11),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text('Idade', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          Text('$_idade anos', style: AppTextStyles.body),
+          Slider(
+            min: 1,
+            max: 100,
+            divisions: 99,
+            value: _idade.toDouble(),
+            label: '$_idade',
+            activeColor: AppColors.primary,
+            onChanged: (value) {
+              setState(() => _idade = value.round());
+            },
+          ),
+          const SizedBox(height: 18),
+          Text('Celular', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          GileadeTextField(
+            controller: _phoneController,
+            hintText: '11999990000',
+            keyboardType: TextInputType.phone,
+            validator: validateCelular,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(13),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep1() {
+    return Form(
+      key: _step1Key,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Igreja', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          GileadeTextField(
+            controller: _igrejaController,
+            hintText: 'Igreja',
+            validator: (value) =>
+                requiredField(value, 'Informe a igreja.'),
+          ),
+          const SizedBox(height: 18),
+          Text('Papel na igreja', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          _DropdownField(
+            value: _papelIgreja,
+            hintText: 'Selecione',
+            items: _papelIgrejaOptions,
+            onChanged: (value) {
+              setState(() => _papelIgreja = value);
+            },
+            validator: (value) =>
+                requiredField(value, 'Informe o papel na igreja.'),
+          ),
+          const SizedBox(height: 18),
+          Text('Estado civil', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          _DropdownField(
+            value: _estadoCivil,
+            hintText: 'Selecione',
+            items: _estadoCivilOptions,
+            onChanged: (value) {
+              setState(() => _estadoCivil = value);
+            },
+            validator: (value) =>
+                requiredField(value, 'Informe o estado civil.'),
+          ),
+          const SizedBox(height: 18),
+          Text('Sexo', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          _DropdownField(
+            value: _sexo,
+            hintText: 'Selecione',
+            items: _sexoOptions,
+            onChanged: (value) {
+              setState(() => _sexo = value);
+            },
+            validator: (value) =>
+                requiredField(value, 'Informe o sexo.'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep2() {
+    return Form(
+      key: _step2Key,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Coloque seu E-mail', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          GileadeTextField(
+            controller: _emailController,
+            hintText: 'E-mail',
+            keyboardType: TextInputType.emailAddress,
+            validator: validateEmail,
+          ),
+          const SizedBox(height: 18),
+          Text('Cidade', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          GileadeTextField(
+            controller: _cidadeController,
+            hintText: 'Cidade',
+            validator: (value) =>
+                requiredField(value, 'Informe a cidade.'),
+          ),
+          const SizedBox(height: 18),
+          Text('Estado (UF)', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          _DropdownField(
+            value: _estadoUf,
+            hintText: 'Selecione',
+            items: _estadoUfOptions,
+            onChanged: (value) {
+              setState(() => _estadoUf = value);
+            },
+            validator: (value) =>
+                requiredField(value, 'Informe o estado UF.'),
+          ),
+          const SizedBox(height: 18),
+          Text('Escolaridade', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          _DropdownField(
+            value: _escolaridade,
+            hintText: 'Selecione',
+            items: _escolaridadeOptions,
+            onChanged: (value) {
+              setState(() => _escolaridade = value);
+            },
+            validator: (value) =>
+                requiredField(value, 'Informe a escolaridade.'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep3() {
+    return Form(
+      key: _step3Key,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Senha', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          GileadeTextField(
+            controller: _passwordController,
+            hintText: '************',
+            obscureText: _obscurePassword,
+            validator: validatePassword,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: AppColors.textSecondary,
+              ),
+              onPressed: () {
+                setState(() => _obscurePassword = !_obscurePassword);
+              },
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text('Confirme a senha', style: AppTextStyles.subtitle),
+          const SizedBox(height: 8),
+          GileadeTextField(
+            controller: _confirmController,
+            hintText: '************',
+            obscureText: _obscureConfirm,
+            validator: _validateConfirmPassword,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureConfirm
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: AppColors.textSecondary,
+              ),
+              onPressed: () {
+                setState(() => _obscureConfirm = !_obscureConfirm);
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Checkbox(
+                value: _acceptedTerms,
+                activeColor: AppColors.primary,
+                onChanged: (value) {
+                  setState(() => _acceptedTerms = value ?? false);
+                },
+              ),
+              Expanded(
+                child: Text(
+                  'Concordo com os Termos e a Politica de Privacidade',
+                  style: AppTextStyles.caption,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -225,212 +599,39 @@ class _RegisterPageState extends State<RegisterPage> {
             children: [
               Text('Cadastro', style: AppTextStyles.title),
               const SizedBox(height: 24),
-              Form(
-                key: _formKey,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: AppColors.shadow,
+                      blurRadius: 18,
+                      offset: Offset(0, 10),
+                    ),
+                  ],
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Coloque seu nome', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    GileadeTextField(
-                      controller: _nameController,
-                      hintText: 'Nome Completo',
-                      validator: _validateName,
-                    ),
-                    const SizedBox(height: 18),
-                    Text('CPF', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    GileadeTextField(
-                      controller: _cpfController,
-                      hintText: '00000000000',
-                      keyboardType: TextInputType.number,
-                      validator: validateCpf,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(11),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    Text('Idade', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    Text('$_idade anos', style: AppTextStyles.body),
-                    Slider(
-                      min: 1,
-                      max: 100,
-                      divisions: 99,
-                      value: _idade.toDouble(),
-                      label: '$_idade',
-                      onChanged: (value) {
-                        setState(() => _idade = value.round());
-                      },
-                    ),
-                    const SizedBox(height: 18),
-                    Text('Celular', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    GileadeTextField(
-                      controller: _phoneController,
-                      hintText: '11999990000',
-                      keyboardType: TextInputType.phone,
-                      validator: validateCelular,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(13),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    Text('Igreja', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    GileadeTextField(
-                      controller: _igrejaController,
-                      hintText: 'Igreja',
-                      validator: (value) =>
-                          requiredField(value, 'Informe a igreja.'),
-                    ),
-                    const SizedBox(height: 18),
-                    Text('Papel na igreja', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    _DropdownField(
-                      value: _papelIgreja,
-                      hintText: 'Selecione',
-                      items: _papelIgrejaOptions,
-                      onChanged: (value) {
-                        setState(() => _papelIgreja = value);
-                      },
-                      validator: (value) =>
-                          requiredField(value, 'Informe o papel na igreja.'),
-                    ),
-                    const SizedBox(height: 18),
-                    Text('Estado civil', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    _DropdownField(
-                      value: _estadoCivil,
-                      hintText: 'Selecione',
-                      items: _estadoCivilOptions,
-                      onChanged: (value) {
-                        setState(() => _estadoCivil = value);
-                      },
-                      validator: (value) =>
-                          requiredField(value, 'Informe o estado civil.'),
-                    ),
-                    const SizedBox(height: 18),
-                    Text('Coloque seu E-mail', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    GileadeTextField(
-                      controller: _emailController,
-                      hintText: 'E-mail',
-                      keyboardType: TextInputType.emailAddress,
-                      validator: validateEmail,
-                    ),
-                    const SizedBox(height: 18),
-                    Text('Sexo', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    _DropdownField(
-                      value: _sexo,
-                      hintText: 'Selecione',
-                      items: _sexoOptions,
-                      onChanged: (value) {
-                        setState(() => _sexo = value);
-                      },
-                      validator: (value) =>
-                          requiredField(value, 'Informe o sexo.'),
-                    ),
-                    const SizedBox(height: 18),
-                    Text('Cidade', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    GileadeTextField(
-                      controller: _cidadeController,
-                      hintText: 'Cidade',
-                      validator: (value) =>
-                          requiredField(value, 'Informe a cidade.'),
-                    ),
-                    const SizedBox(height: 18),
-                    Text('Estado (UF)', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    _DropdownField(
-                      value: _estadoUf,
-                      hintText: 'Selecione',
-                      items: _estadoUfOptions,
-                      onChanged: (value) {
-                        setState(() => _estadoUf = value);
-                      },
-                      validator: (value) =>
-                          requiredField(value, 'Informe o estado UF.'),
-                    ),
-                    const SizedBox(height: 18),
-                    Text('Escolaridade', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    _DropdownField(
-                      value: _escolaridade,
-                      hintText: 'Selecione',
-                      items: _escolaridadeOptions,
-                      onChanged: (value) {
-                        setState(() => _escolaridade = value);
-                      },
-                      validator: (value) =>
-                          requiredField(value, 'Informe a escolaridade.'),
-                    ),
-                    const SizedBox(height: 18),
-                    Text('Senha', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    GileadeTextField(
-                      controller: _passwordController,
-                      hintText: '************',
-                      obscureText: _obscurePassword,
-                      validator: validatePassword,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: AppColors.textSecondary,
-                        ),
-                        onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Text('Confirme a senha', style: AppTextStyles.subtitle),
-                    const SizedBox(height: 8),
-                    GileadeTextField(
-                      controller: _confirmController,
-                      hintText: '************',
-                      obscureText: _obscureConfirm,
-                      validator: _validateConfirmPassword,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureConfirm
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: AppColors.textSecondary,
-                        ),
-                        onPressed: () {
-                          setState(() => _obscureConfirm = !_obscureConfirm);
-                        },
-                      ),
-                    ),
+                    _buildStepIndicator(),
                     const SizedBox(height: 24),
-                    Row(
+                    _buildStepTitle(),
+                    const SizedBox(height: 28),
+                    IndexedStack(
+                      index: _currentStep,
                       children: [
-                        Checkbox(
-                          value: _acceptedTerms,
-                          onChanged: (value) {
-                            setState(() => _acceptedTerms = value ?? false);
-                          },
-                        ),
-                        Expanded(
-                          child: Text(
-                            'Concordo com os Termos e a Politica de Privacidade',
-                            style: AppTextStyles.caption,
-                          ),
-                        ),
+                        _buildStep0(),
+                        _buildStep1(),
+                        _buildStep2(),
+                        _buildStep3(),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    GileadeButton(
-                      label: _loading ? 'Carregando...' : 'Confirme',
-                      onPressed: _loading ? null : _submit,
-                    ),
+                    const SizedBox(height: 28),
+                    _buildNavigation(),
                   ],
                 ),
               ),
