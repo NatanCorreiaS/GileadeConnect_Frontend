@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../../core/providers/auth_provider.dart';
 import '../../core/routes/app_routes.dart';
-import '../../core/services/api_client.dart';
-import '../../core/services/auth_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../core/utils/crypto_utils.dart';
 import '../../core/utils/sanitizers.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/gileade_button.dart';
@@ -21,23 +20,13 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _cpfController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _loading = false;
-
-  late final AuthService _authService;
-
-  @override
-  void initState() {
-    super.initState();
-    final baseUrl = dotenv.env['BASE_URL'] ?? 'http://localhost:8080';
-    _authService = AuthService(ApiClient(baseUrl: baseUrl));
-  }
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _cpfController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -46,14 +35,13 @@ class _LoginPageState extends State<LoginPage> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    setState(() => _loading = true);
 
-    final email = sanitizeEmail(_emailController.text);
+    final cpf = sanitizeCpf(_cpfController.text);
     final senha = sanitizePassword(_passwordController.text);
-    final senhaHash = hashSenha(senha);
+    final authProvider = context.read<AuthProvider>();
 
     try {
-      await _authService.login(email: email, senhaHash: senhaHash);
+      await authProvider.login(cpf: cpf, senha: senha);
       if (mounted) {
         Navigator.pushNamedAndRemoveUntil(
           context,
@@ -67,15 +55,13 @@ class _LoginPageState extends State<LoginPage> {
           SnackBar(content: Text('Erro no login: $error')),
         );
       }
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       body: SafeArea(
@@ -110,11 +96,15 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 28),
                       GileadeTextField(
-                        controller: _emailController,
-                        hintText: 'E-mail',
-                        prefixIcon: Icons.mail_outline,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: validateEmail,
+                        controller: _cpfController,
+                        hintText: 'CPF',
+                        prefixIcon: Icons.badge_outlined,
+                        keyboardType: TextInputType.number,
+                        validator: validateCpf,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(11),
+                        ],
                       ),
                       const SizedBox(height: 18),
                       GileadeTextField(
@@ -145,8 +135,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 8),
                       GileadeButton(
-                        label: _loading ? 'Carregando...' : 'ENTRAR',
-                        onPressed: _loading ? null : _submit,
+                        label: authProvider.loading ? 'Carregando...' : 'ENTRAR',
+                        onPressed: authProvider.loading ? null : _submit,
                       ),
                       const SizedBox(height: 16),
                       GileadeButton(

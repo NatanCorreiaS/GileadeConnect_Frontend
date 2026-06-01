@@ -2,7 +2,7 @@ class PessoaCreateRequest {
   PessoaCreateRequest({
     required this.nome,
     required this.email,
-    required this.senhaHash,
+    required this.senha,
     required this.cpf,
     required this.idade,
     required this.celular,
@@ -18,7 +18,7 @@ class PessoaCreateRequest {
 
   final String nome;
   final String email;
-  final String senhaHash;
+  final String senha;
   final String cpf;
   final int idade;
   final String celular;
@@ -35,7 +35,7 @@ class PessoaCreateRequest {
     return {
       'nome': nome,
       'email': email,
-      'senha': senhaHash,
+      'senha': senha,
       'cpf': cpf,
       'idade': idade,
       'celular': celular,

@@ -3,12 +3,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiClient {
-  ApiClient({required String baseUrl, http.Client? client})
+  ApiClient({required String baseUrl, http.Client? client, this.token})
       : _client = client ?? http.Client(),
         _baseUrl = _normalizeBaseUrl(baseUrl);
 
   final http.Client _client;
   final String _baseUrl;
+  String? token;
 
   Uri _buildUri(String path, [Map<String, String>? queryParameters]) {
     final uri = Uri.parse(_baseUrl);
@@ -24,9 +25,15 @@ class ApiClient {
     Map<String, String>? queryParameters,
   }) {
     final uri = _buildUri(path, queryParameters);
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+    };
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
     return _client.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: jsonEncode(body),
     );
   }

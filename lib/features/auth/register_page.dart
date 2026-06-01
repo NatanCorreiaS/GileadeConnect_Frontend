@@ -8,7 +8,6 @@ import '../../core/services/api_client.dart';
 import '../../core/services/pessoas_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../core/utils/crypto_utils.dart';
 import '../../core/utils/sanitizers.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/gileade_button.dart';
@@ -197,12 +196,11 @@ class _RegisterPageState extends State<RegisterPage> {
     final estadoUf = sanitizeUf(_estadoUf ?? '');
     final escolaridade = sanitizeText(_escolaridade ?? '');
     final senha = sanitizePassword(_passwordController.text);
-    final senhaHash = hashSenha(senha);
 
     final request = PessoaCreateRequest(
       nome: nome,
       email: email,
-      senhaHash: senhaHash,
+      senha: senha,
       cpf: cpf,
       idade: _idade,
       celular: celular,
@@ -221,11 +219,7 @@ class _RegisterPageState extends State<RegisterPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cadastro realizado com sucesso!')),
         );
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.home,
-          (_) => false,
-        );
+        Navigator.pushReplacementNamed(context, AppRoutes.login);
       }
     } catch (error) {
       if (mounted) {
