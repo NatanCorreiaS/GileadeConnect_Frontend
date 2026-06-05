@@ -19,9 +19,12 @@ class CheckoutRequest {
       'ticket_id': ticketId,
       'quantidade': quantidade,
       'beneficiados': beneficiados.map((b) => b.toJson()).toList(),
-      'success_url': 'https://www.mercadopago.com.br',
-      'failure_url': 'https://www.mercadopago.com.br',
-      'pending_url': 'https://www.mercadopago.com.br',
+      'back_urls': {
+        'success': 'gileadeconnect://checkout/success',
+        'failure': 'gileadeconnect://checkout/failure',
+        'pending': 'gileadeconnect://checkout/pending',
+      },
+      'auto_return': 'approved',
     };
   }
 }

@@ -11,12 +11,14 @@ import '../../core/models/beneficiado.dart';
 import '../../core/models/checkout.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/services/beneficiado_database.dart';
+import '../../core/services/deep_link_service.dart';
 import '../../core/services/pagamentos_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/sanitizers.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/gileade_button.dart';
+import '../../main.dart';
 
 class _BeneficiadoFormData {
   final nomeCtrl = TextEditingController();
@@ -79,7 +81,7 @@ class CheckoutPage extends StatefulWidget {
   State<CheckoutPage> createState() => _CheckoutPageState();
 }
 
-class _CheckoutPageState extends State<CheckoutPage> {
+class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver {
   static const _sexoOptions = ['Masculino', 'Feminino'];
   static const _papelIgrejaOptions = ['Pastor', 'Lider', 'Voluntario', 'Membro'];
   static const _estadoCivilOptions = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viuvo(a)'];
@@ -110,9 +112,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
   List<Beneficiado> _beneficiadosSalvos = [];
   bool _mostrarBeneficiadoSalvos = true;
   String _cpfBusca = '';
+  bool _aguardandoRetornoPagamento = false;
+
+  void _onDeepLinkCheckoutResult(CheckoutResult result) {
+    if (!mounted) return;
+    if (!_aguardandoRetornoPagamento) return;
+    _aguardandoRetornoPagamento = false;
+    _mostrarRetornoPagamento(result);
+  }
 
   @override
   void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    DeepLinkService().addListener(_onDeepLinkCheckoutResult);
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)?.settings.arguments;
@@ -132,6 +144,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
     for (final d in _formData) {
       d.dispose();
     }
+    DeepLinkService().removeListener(_onDeepLinkCheckoutResult);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -864,8 +878,54 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _aguardandoRetornoPagamento) {
+      _aguardandoRetornoPagamento = false;
+      final result = DeepLinkService().consumePendingResult();
+      if (mounted) {
+        if (result != null) {
+          _mostrarRetornoPagamento(result);
+        } else {
+          Navigator.popUntil(context, (route) => route.isFirst);
+        }
+      }
+    }
+  }
+
+  void _mostrarRetornoPagamento(CheckoutResult result) {
+    String mensagem;
+    Color cor;
+    switch (result) {
+      case CheckoutResult.success:
+        mensagem = 'Pagamento aprovado! Voce recebera uma confirmacao em breve.';
+        cor = AppColors.primary;
+        break;
+      case CheckoutResult.failure:
+        mensagem = 'Pagamento recusado. Tente novamente.';
+        cor = AppColors.danger;
+        break;
+      case CheckoutResult.pending:
+        mensagem = 'Pagamento pendente. Aguardando confirmacao.';
+        cor = AppColors.textSecondary;
+        break;
+    }
+
+    Navigator.popUntil(context, (route) => route.isFirst);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (navigatorKey.currentContext != null) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(mensagem), backgroundColor: cor),
+        );
+      }
+    });
+  }
+
   Future<void> _abrirCheckout(CheckoutResponse response) async {
     final url = Uri.parse(response.initPoint);
+
+    _aguardandoRetornoPagamento = true;
 
     try {
       if (Platform.isAndroid) {
@@ -894,6 +954,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         );
       }
     } catch (e) {
+      _aguardandoRetornoPagamento = false;
       try {
         await url_launcher.launchUrl(
           url,
@@ -901,29 +962,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
         );
       } catch (_) {}
     }
-
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Pagamento'),
-        content: const Text(
-          'Verifique o status do seu ticket na tela "Meus Tickets".\n\n'
-          'Se o pagamento foi aprovado, o status sera atualizado automaticamente.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.popUntil(context, (route) => route.isFirst);
-            },
-            child: const Text('VOLTAR AO INICIO'),
-          ),
-        ],
-      ),
-    );
   }
 
   IconData _iconeTicket(String tipo) {

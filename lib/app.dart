@@ -7,6 +7,7 @@ import 'core/providers/tickets_provider.dart';
 import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home/home_page.dart';
+import 'main.dart';
 
 class GileadeApp extends StatelessWidget {
   const GileadeApp({super.key});
@@ -28,6 +29,7 @@ class GileadeApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         title: 'Gileade Connect',
         theme: AppTheme.light,
         debugShowCheckedModeBanner: false,
