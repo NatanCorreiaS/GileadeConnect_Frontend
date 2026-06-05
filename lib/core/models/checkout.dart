@@ -19,6 +19,9 @@ class CheckoutRequest {
       'ticket_id': ticketId,
       'quantidade': quantidade,
       'beneficiados': beneficiados.map((b) => b.toJson()).toList(),
+      'success_url': 'https://www.mercadopago.com.br',
+      'failure_url': 'https://www.mercadopago.com.br',
+      'pending_url': 'https://www.mercadopago.com.br',
     };
   }
 }

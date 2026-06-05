@@ -16,8 +16,8 @@ class PagamentosService {
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final body = jsonDecode(response.body);
-      final mensagem = body['error'] ?? body['mensagem'] ?? 'Erro desconhecido';
-      throw Exception(mensagem);
+      final mensagem = body['error'] ?? body['mensagem'] ?? body['message'] ?? response.body;
+      throw Exception(mensagem.toString());
     }
     return CheckoutResponse.fromJson(
         jsonDecode(response.body) as Map<String, dynamic>);

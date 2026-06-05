@@ -918,9 +918,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
             onPressed: () {
               Navigator.pop(ctx);
               Navigator.popUntil(context, (route) => route.isFirst);
-              if (mounted) {
-                context.read<AuthProvider>();
-              }
             },
             child: const Text('VOLTAR AO INICIO'),
           ),
