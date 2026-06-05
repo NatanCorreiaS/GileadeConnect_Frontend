@@ -699,50 +699,16 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
         Text('Idade: $idadeInt anos *',
             style: AppTextStyles.caption.copyWith(
                 fontSize: 12, color: AppColors.textSecondary)),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            Expanded(
-              child: Slider(
-                value: idadeInt.toDouble().clamp(1, 100),
-                min: 1,
-                max: 100,
-                divisions: 99,
-                activeColor: AppColors.primary,
-                label: '$idadeInt',
-                onChanged: (v) {
-                  setState(() => d.idade = v.round().toString());
-                },
-              ),
-            ),
-            SizedBox(
-              width: 50,
-              child: TextFormField(
-                initialValue: d.idade,
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(3),
-                ],
-                style: AppTextStyles.body.copyWith(
-                    fontSize: 14, fontWeight: FontWeight.w600),
-                decoration: const InputDecoration(
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                  counterText: '',
-                ),
-                onChanged: (v) {
-                  final parsed = int.tryParse(v);
-                  if (parsed != null && parsed >= 1 && parsed <= 100) {
-                    setState(() => d.idade = v);
-                  }
-                },
-              ),
-            ),
-          ],
+        Slider(
+          value: idadeInt.toDouble().clamp(1, 100),
+          min: 1,
+          max: 100,
+          divisions: 99,
+          activeColor: AppColors.primary,
+          label: '$idadeInt',
+          onChanged: (v) {
+            setState(() => d.idade = v.round().toString());
+          },
         ),
       ],
     );

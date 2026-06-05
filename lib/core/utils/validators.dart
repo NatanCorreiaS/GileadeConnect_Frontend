@@ -69,3 +69,28 @@ String? validateCelular(String? value) {
   }
   return null;
 }
+
+String? validateNome(String? value) {
+  final required = requiredField(value, 'Campo obrigatorio.');
+  if (required != null) {
+    return required;
+  }
+  if (value!.trim().length < 2) {
+    return 'Muito curto.';
+  }
+  return null;
+}
+
+String? validateUf(String? value) {
+  final required = requiredField(value, 'UF e obrigatoria.');
+  if (required != null) {
+    return required;
+  }
+  if (value!.trim().length != 2) {
+    return 'UF deve ter 2 letras.';
+  }
+  if (!RegExp(r'^[A-Z]{2}$').hasMatch(value.trim().toUpperCase())) {
+    return 'UF invalida.';
+  }
+  return null;
+}

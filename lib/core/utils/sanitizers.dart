@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+
 String sanitizeName(String input) {
   final trimmed = input.trim();
   return trimmed.replaceAll(RegExp(r'\s+'), ' ');
@@ -30,4 +32,17 @@ String sanitizeUf(String input) {
 String sanitizeText(String input) {
   final trimmed = input.trim();
   return trimmed.replaceAll(RegExp(r'\s+'), ' ');
+}
+
+class LowerCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return newValue.copyWith(
+      text: newValue.text.toLowerCase(),
+      selection: newValue.selection,
+    );
+  }
 }
