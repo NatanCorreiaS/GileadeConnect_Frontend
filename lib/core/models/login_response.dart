@@ -63,4 +63,23 @@ class Usuario {
   final String cidade;
   final String estadoUf;
   final String escolaridade;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nome': nome,
+      'tipo_usuario': tipoUsuario,
+      'cpf': cpf,
+      'idade': idade,
+      'celular': celular,
+      'igreja': igreja,
+      'papel_igreja': papelIgreja,
+      'estado_civil': estadoCivil,
+      'email': email,
+      'sexo': sexo,
+      'cidade': cidade,
+      'estado_uf': estadoUf,
+      'escolaridade': escolaridade,
+    };
+  }
 }

@@ -19,23 +19,51 @@ class ApiClient {
     );
   }
 
-  Future<http.Response> postJson(
-    String path,
-    Map<String, dynamic> body, {
-    Map<String, String>? queryParameters,
-  }) {
-    final uri = _buildUri(path, queryParameters);
+  Map<String, String> _headers() {
     final headers = <String, String>{
       'Content-Type': 'application/json',
     };
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
     }
-    return _client.post(
-      uri,
-      headers: headers,
-      body: jsonEncode(body),
-    );
+    return headers;
+  }
+
+  Future<http.Response> get(String path, {Map<String, String>? queryParameters}) {
+    final uri = _buildUri(path, queryParameters);
+    return _client.get(uri, headers: _headers());
+  }
+
+  Future<http.Response> postJson(
+    String path,
+    Map<String, dynamic> body, {
+    Map<String, String>? queryParameters,
+  }) {
+    final uri = _buildUri(path, queryParameters);
+    return _client.post(uri, headers: _headers(), body: jsonEncode(body));
+  }
+
+  Future<http.Response> putJson(
+    String path,
+    Map<String, dynamic> body, {
+    Map<String, String>? queryParameters,
+  }) {
+    final uri = _buildUri(path, queryParameters);
+    return _client.put(uri, headers: _headers(), body: jsonEncode(body));
+  }
+
+  Future<http.Response> patchJson(
+    String path,
+    Map<String, dynamic> body, {
+    Map<String, String>? queryParameters,
+  }) {
+    final uri = _buildUri(path, queryParameters);
+    return _client.patch(uri, headers: _headers(), body: jsonEncode(body));
+  }
+
+  Future<http.Response> delete(String path, {Map<String, String>? queryParameters}) {
+    final uri = _buildUri(path, queryParameters);
+    return _client.delete(uri, headers: _headers());
   }
 
   static String _normalizeBaseUrl(String raw) {
