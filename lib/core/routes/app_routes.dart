@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../features/admin/admin_dashboard_page.dart';
 import '../../features/admin/admin_ticket_form_page.dart';
 import '../../features/admin/admin_tickets_page.dart';
+import '../../features/admin/admin_export_page.dart';
 import '../../features/admin/admin_usuario_edit_page.dart';
 import '../../features/admin/admin_usuarios_page.dart';
 import '../../features/auth/login_page.dart';
@@ -22,6 +23,7 @@ class AppRoutes {
   static const adminTicketForm = '/admin/tickets/form';
   static const adminUsuarios = '/admin/usuarios';
   static const adminUsuarioEdit = '/admin/usuarios/edit';
+  static const adminExport = '/admin/export';
 
   static Map<String, WidgetBuilder> get routes {
     return {
@@ -35,6 +37,7 @@ class AppRoutes {
       adminTicketForm: (_) => const AdminTicketFormPage(),
       adminUsuarios: (_) => const AdminUsuariosPage(),
       adminUsuarioEdit: (_) => const AdminUsuarioEditPage(),
+      adminExport: (_) => const AdminExportPage(),
     };
   }
 }
