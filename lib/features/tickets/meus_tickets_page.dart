@@ -270,7 +270,7 @@ class _MeusTicketsPageState extends State<MeusTicketsPage> {
   String _formatarData(String data) {
     try {
       final date = DateTime.parse(data);
-      return DateFormat('dd/MM/yy', 'pt_BR').format(date);
+      return DateFormat('dd/MM/yyyy', 'pt_BR').format(date);
     } catch (_) {
       return data;
     }

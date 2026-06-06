@@ -1,11 +1,11 @@
 {
-    "name": "gileade_frontend",
-    "short_name": "gileade_frontend",
+    "name": "Gileade",
+    "short_name": "Gileade",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "App de inscricao de eventos da Igreja Gileade",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

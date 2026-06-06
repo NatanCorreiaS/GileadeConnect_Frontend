@@ -90,7 +90,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
           Image.asset('assets/Gileade_logo.png', width: 200, height: 200),
           const SizedBox(height: 12),
           Text(
-            'GILEADECONNECT',
+            'GILEADE',
             style: AppTextStyles.title.copyWith(
               color: Colors.white,
               fontSize: 24,

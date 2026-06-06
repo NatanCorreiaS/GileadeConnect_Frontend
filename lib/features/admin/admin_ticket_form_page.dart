@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/models/ticket.dart';
@@ -24,8 +25,11 @@ class _AdminTicketFormPageState extends State<AdminTicketFormPage> {
   final _dataEventoController = TextEditingController();
   bool _loading = false;
   Ticket? _edicaoTicket;
+  DateTime? _dataEventoSelecionada;
 
   final _tipos = ['Individual', 'Duo', 'Caravana'];
+  final _dateDisplayFormat = DateFormat('dd/MM/yyyy', 'pt_BR');
+  final _dateApiFormat = DateFormat('yyyy-MM-dd');
 
   @override
   void initState() {
@@ -39,7 +43,10 @@ class _AdminTicketFormPageState extends State<AdminTicketFormPage> {
         _descricaoController.text = args.descricao;
         _precoController.text = args.preco.toStringAsFixed(2);
         _quantidadeController.text = args.quantidadeDisponivel.toString();
-        _dataEventoController.text = args.dataEvento;
+        _dataEventoSelecionada = DateTime.tryParse(args.dataEvento);
+        _dataEventoController.text = _dataEventoSelecionada != null
+            ? _dateDisplayFormat.format(_dataEventoSelecionada!)
+            : args.dataEvento;
         setState(() {});
       }
     });
@@ -149,13 +156,14 @@ class _AdminTicketFormPageState extends State<AdminTicketFormPage> {
       onTap: () async {
         final date = await showDatePicker(
           context: context,
-          initialDate: DateTime.now().add(const Duration(days: 30)),
+          locale: const Locale('pt', 'BR'),
+          initialDate: _dataEventoSelecionada ?? DateTime.now().add(const Duration(days: 30)),
           firstDate: DateTime.now(),
           lastDate: DateTime.now().add(const Duration(days: 730)),
         );
         if (date != null) {
-          _dataEventoController.text =
-              '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+          _dataEventoSelecionada = date;
+          _dataEventoController.text = _dateDisplayFormat.format(date);
         }
       },
     );
@@ -174,7 +182,9 @@ class _AdminTicketFormPageState extends State<AdminTicketFormPage> {
         'descricao': _descricaoController.text.trim(),
         'preco': _precoController.text.trim(),
         'quantidade_disponivel': int.parse(_quantidadeController.text.trim()),
-        'data_evento': _dataEventoController.text.trim(),
+        'data_evento': _dataEventoSelecionada != null
+            ? _dateApiFormat.format(_dataEventoSelecionada!)
+            : _dataEventoController.text.trim(),
       };
 
       if (_edicaoTicket != null) {
